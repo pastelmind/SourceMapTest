@@ -83,8 +83,10 @@ public class SourceMapLoader
         }
 
         /**
-         * Decorates a V8-style JavaScript stack trace by parsing source maps and adding source stack lines below each
-         * stack line.
+         * <p>Decorates a V8-style JavaScript stack trace by parsing source maps and adding source stack lines below
+         * each stack line.</p>
+         *
+         * <p>Note: This method is NOT idempotent.</p>
          *
          * @param stackTrace V8-style stack trace message
          * @return Decorated stack trace message containing source stack lines
@@ -93,14 +95,10 @@ public class SourceMapLoader
         {
                 final String[] stackLines = stackTrace.split( "\n" );
                 final ArrayList<String> convertedStackLines = new ArrayList<>();
-                for ( int i = 0; i < stackLines.length; ++i )
+                for ( String line : stackLines )
                 {
-                        final String line = stackLines[i];
                         convertedStackLines.add( line );
-                        if ( i + 1 < stackLines.length && !stackLines[i + 1].contains( "->" ) )
-                        {
-                                createSourceStackLine( line ).ifPresent( convertedStackLines::add );
-                        }
+                        createSourceStackLine( line ).ifPresent( convertedStackLines::add );
                 }
                 return String.join( "\n", convertedStackLines );
         }

@@ -128,7 +128,7 @@ public class SourceMapLoader
                 return loadSourceMapUrlFromScript( generatedScriptPath )
                         .flatMap( this::loadSourceMapFromUrl )
                         .map( srcMap -> srcMap.getMapping( generatedLine, generatedColumn ) )
-                        .map( mapping -> String.format( "%s-> %s (%s:%d:%d)",
+                        .map( mapping -> String.format( "%s    -> %s (%s:%d:%d)",
                                                         leadingWhitespace,
                                                         mapping.getSourceSymbolName() != null ?
                                                         mapping.getSourceSymbolName() : "<anonymous>",

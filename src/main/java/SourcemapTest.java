@@ -14,7 +14,7 @@ public class SourcemapTest
 
                 System.out.printf( "Original stack trace:\n%s\n\n", stackTrace );
 
-                SourceMapLoader sourceMapLoader = new SourceMapLoader( new Path[] {Paths.get( "src/test" )} );
-                System.out.printf( "Decorated stack trace:\n%s\n", sourceMapLoader.decorateStackTrace( stackTrace ) );
+                SourceMapStackTraceDecorator sourceMapStackTraceDecorator = new SourceMapStackTraceDecorator( new Path[] {Paths.get( "src/test" )} );
+                System.out.printf( "Decorated stack trace:\n%s\n", sourceMapStackTraceDecorator.decorateStackTrace( stackTrace ) );
         }
 }

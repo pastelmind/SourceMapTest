@@ -20,19 +20,20 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * <p>Class that loads source maps for JavaScript code.</p>
+ * <p>Class that decorates stack trace messages from transformed JavaScript code by parsing source maps and adding
+ * symbols from the original source code.</p>
  *
  * <p>The implementation makes the assumptions:</p>
  *
  * <ul>
- *   <li>The {@link SourceMapLoader} exists for the duration of the JS execution context. When the execution finishes,
- *   the SourceMapLoader should be destroyed. This allows the next execution context to load source maps that are
- *   modified on disk, instead of reusing a stale cache.</li>
+ *   <li>The {@link SourceMapStackTraceDecorator} exists for the duration of the JS execution context. When the
+ *   execution finishes, the {@link SourceMapStackTraceDecorator} should be destroyed. This allows the next execution
+ *   context to load source maps that are modified on disk, instead of reusing a stale cache.</li>
  *   <li>The number of source maps loaded during lifetime of a JS execution context is small (<100). This allows us to
  *   use a simple {@link ConcurrentHashMap} instead of a full-blown LRU cache without worrying about memory usage.</li>
  * </ul>
  */
-public class SourceMapLoader
+public class SourceMapStackTraceDecorator
 {
         // Regular expression copied from node-source-map-support v0.5.16 by Evan Wallace
         private static final String sourceMapCommentRegex = "(?://[@#][\\s]*sourceMappingURL=([^\\s'\"]+)[\\s]*$)" +
@@ -73,7 +74,7 @@ public class SourceMapLoader
          * @param whitelistedPaths Array of whitelisted paths. The loader will only load JavaScript files and source
          *                         maps that are under any of these paths.
          */
-        public SourceMapLoader( Path[] whitelistedPaths )
+        public SourceMapStackTraceDecorator( Path[] whitelistedPaths )
         {
                 this.whitelistedPaths = Arrays
                         .stream( whitelistedPaths )

@@ -130,7 +130,8 @@ public class SourceMapLoader
                         .map( srcMap -> srcMap.getMapping( generatedLine, generatedColumn ) )
                         .map( mapping -> String.format( "%s-> %s (%s:%d:%d)",
                                                         leadingWhitespace,
-                                                        mapping.getSourceSymbolName(),
+                                                        mapping.getSourceSymbolName() != null ?
+                                                        mapping.getSourceSymbolName() : "<anonymous>",
                                                         mapping.getSourceFileName(),
                                                         mapping.getSourceLine() + 1,
                                                         mapping.getSourceColumn() + 1 ) );

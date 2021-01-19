@@ -29,8 +29,10 @@ import java.util.stream.Collectors;
  *   <li>The {@link SourceMapStackTraceDecorator} exists for the duration of the JS execution context. When the
  *   execution finishes, the {@link SourceMapStackTraceDecorator} should be destroyed. This allows the next execution
  *   context to load source maps that are modified on disk, instead of reusing a stale cache.</li>
- *   <li>The number of source maps loaded during lifetime of a JS execution context is small (<100). This allows us to
- *   use a simple {@link ConcurrentHashMap} instead of a full-blown LRU cache without worrying about memory usage.</li>
+ *   <li>Only a small number (<100) of JavaScript files and source maps need to be loaded during the lifetime of a JS
+ *   execution context. Thus, we can use a simple {@link ConcurrentHashMap} instead of a full-blown LRU cache without
+ *   worrying about memory usage.</li>
+ *   <li>All JavaScript code and source maps are UTF-8 encoded.</li>
  * </ul>
  */
 public class SourceMapStackTraceDecorator

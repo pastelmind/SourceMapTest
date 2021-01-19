@@ -9,12 +9,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * <p>Class that loads source maps for JavaScript code.</p>
@@ -53,7 +56,7 @@ public class SourceMapLoader
          * <p>A value of {@link Optional#empty()} indicates that the script path has been accessed before, but a source
          * map URL could not be extracted for some reason.</p>
          */
-        private final ConcurrentMap<Path, Optional<URL>> sourceMapUrlCache;
+        private final ConcurrentMap<Path, Optional<URL>> sourceMapUrlCache = new ConcurrentHashMap<>();
         /**
          * <p>Cache of {@link SourceMap} objects, keyed by source map URLs. Source map URLs are either {@code file:}
          * URLs that point to actual source map files, or base64-encoded {@code data:} URLs that contain source maps.
@@ -62,12 +65,21 @@ public class SourceMapLoader
          * <p>A value of {@link Optional#empty()} indicates that the URL has been accessed before, but a source map
          * could not be parsed for some reason.</p>
          */
-        private final ConcurrentMap<URL, Optional<SourceMap>> sourceMapCache;
+        private final ConcurrentMap<URL, Optional<SourceMap>> sourceMapCache = new ConcurrentHashMap<>();
 
-        public SourceMapLoader()
+        private final List<Path> whitelistedPaths;
+
+        /**
+         * @param whitelistedPaths Array of whitelisted paths. The loader will only load JavaScript files and source
+         *                         maps that are under any of these paths.
+         */
+        public SourceMapLoader( Path[] whitelistedPaths )
         {
-                sourceMapUrlCache = new ConcurrentHashMap<>();
-                sourceMapCache = new ConcurrentHashMap<>();
+                this.whitelistedPaths = Arrays
+                        .stream( whitelistedPaths )
+                        .map( Path::normalize )
+                        .map( Path::toAbsolutePath )
+                        .collect( Collectors.toList() );
         }
 
         /**
@@ -141,6 +153,11 @@ public class SourceMapLoader
         private Optional<URL> loadSourceMapUrlFromScript( final Path scriptPath )
         {
                 final Path scriptAbsolutePath = scriptPath.normalize().toAbsolutePath();
+                if ( !isUnderWhitelistedPath( scriptAbsolutePath ) )
+                {
+                        return Optional.empty();
+                }
+
                 Optional<URL> sourceMapUrl = sourceMapUrlCache.get( scriptAbsolutePath );
                 // Valid, since we never store null values in sourceMapUrlCache. A null indicates a cache miss.
                 // noinspection OptionalAssignedToNull
@@ -214,6 +231,18 @@ public class SourceMapLoader
         }
 
         /**
+         * Checks if the given path is under any of the whitelisted directories.
+         *
+         * @param path Path to check
+         * @return Whether the {@code path} is inside any of the whitelisted directories
+         */
+        private boolean isUnderWhitelistedPath( final Path path )
+        {
+                final Path normalizedPath = path.normalize().toAbsolutePath();
+                return whitelistedPaths.stream().anyMatch( normalizedPath::startsWith );
+        }
+
+        /**
          * Extract the first source map URL embedded within JavaScript code.
          *
          * @param javascript String containing JavaScript code
@@ -238,7 +267,7 @@ public class SourceMapLoader
          * @throws IOException               If the file cannot be opened
          * @throws URISyntaxException        If the URL is malformed
          */
-        private static String loadFileContentFromUrl( URL url )
+        private String loadFileContentFromUrl( URL url )
                 throws ForbiddenUrlProtocolError, IOException, URISyntaxException
         {
                 final byte[] rawContent;
@@ -250,7 +279,7 @@ public class SourceMapLoader
                         rawContent = Base64.getDecoder().decode( encodedContent );
                 }
                 // Rudimentary security measure
-                else if ( urlString.startsWith( "file:" ) )
+                else if ( urlString.startsWith( "file:" ) && isUnderWhitelistedPath( Paths.get( url.toURI() ) ) )
                 {
                         Path filePath = Paths.get( url.toURI() );
                         rawContent = Files.readAllBytes( filePath );

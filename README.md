@@ -1,5 +1,9 @@
 # SourcemapTest
 
+**NOTE: This is a failed project. See [this forum thread](https://kolmafia.us/threads/postmortem-attempt-at-source-map-support.25834/) for details.**
+
+**The TL;DR is that Rhino doesn't provide proper column numbers for stack trace messages, which makes using source maps impossible.**
+
 This project uses a modified POM file for the [sourcemap](https://mvnrepository.com/artifact/com.atlassian.sourcemap/sourcemap) package. To build this project, sourcemap must be manually installed using the following command:
 
 ```
